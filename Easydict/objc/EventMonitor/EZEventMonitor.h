@@ -33,11 +33,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) void (^doubleCommandBlock)(void);
 @property (nonatomic, copy) void (^leftMouseDownBlock)(CGPoint clickPoint);
 @property (nonatomic, copy) void (^rightMouseDownBlock)(CGPoint clickPoint);
+@property (nonatomic, copy) void (^doubleControlBlock)(void);
 
 + (instancetype)shared;
 
 /// Use Accessibility to get selected text first, if failed, use shortcut.
 - (void)getSelectedTextWithCompletion:(void (^)(NSString *_Nullable text))completion;
+
+/// Use Accessibility to get selected text first, if failed, use shortcut. With checkTextFrame parameter.
+- (void)getSelectedText:(BOOL)checkTextFrame completion:(void (^)(NSString *_Nullable text))completion;
 
 - (void)addLocalMonitorWithEvent:(NSEventMask)mask handler:(void (^)(NSEvent *_Nonnull))handler;
 - (void)addGlobalMonitorWithEvent:(NSEventMask)mask handler:(void (^)(NSEvent *_Nonnull))handler;

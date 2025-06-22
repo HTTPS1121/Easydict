@@ -14,6 +14,12 @@
 #import "EZCoordinateUtils.h"
 #import "EZLog.h"
 #import "Easydict-Swift.h"
+#import "EZPopButtonWindow.h"
+#import "EZMainQueryWindow.h"
+#import "EZMiniQueryWindow.h"
+#import "EZLayoutManager.h"
+#import "EZLoadingAnimationView.h"
+#import "EZReplaceTextButton.h"
 
 @interface EZWindowManager ()
 
@@ -29,6 +35,8 @@
 
 /// The screen that the last mouse clicked on.
 @property (nonatomic, strong, readonly) NSScreen *screen;
+
+@property (nonatomic, strong) EZLoadingAnimationView *mouseIndicatorView;
 
 @end
 
@@ -150,6 +158,51 @@ static EZWindowManager *_instance;
 
     [self.eventMonitor setDoubleCommandBlock:^{
         NSLog(@"double command block");
+    }];
+    [self.eventMonitor setDoubleControlBlock:^{
+        mm_weakify(self);
+        NSLog(@"double control block");
+        
+        // שליפת הטקסט הנבחר עם תמיכה ב-force get selected text
+        [self.eventMonitor getSelectedText:NO completion:^(NSString * _Nullable selectedText) {
+            mm_strongify(self);
+            if (!self) return;
+            
+            NSString *trimmedText = [selectedText trim];
+            if (trimmedText.length > 0) {
+                NSLog(@"Selected text on double control: %@", trimmedText);
+                
+                // הצגת אינדיקטור ליד העכבר
+                [self showMouseIndicator];
+                
+                // הפעלת תרגום ברקע
+                [self.backgroundQueryViewController startQueryText:trimmedText actionType:EZActionTypeShortcutQuery];
+                
+                // המתנה לתוצאת התרגום והחלפת הטקסט
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    mm_strongify(self);
+                    if (!self) return;
+                    
+                    [self hideMouseIndicator];
+                    
+                    // קבלת תוצאת התרגום מה-services
+                    NSArray *services = self.backgroundQueryViewController.services;
+                    for (EZQueryService *service in services) {
+                        EZQueryResult *result = service.result;
+                        if (result.hasTranslatedResult && result.translatedText.length > 0) {
+                            NSString *translatedText = result.translatedText;
+                            NSLog(@"Translation result for '%@': %@", trimmedText, translatedText);
+                            
+                            // החלפת הטקסט הנבחר בתרגום
+                            [self replaceSelectedTextWithTranslation:translatedText];
+                            break;
+                        }
+                    }
+                });
+            } else {
+                NSLog(@"No text selected on double control");
+            }
+        }];
     }];
 }
 
@@ -1101,6 +1154,68 @@ static EZWindowManager *_instance;
     }
 
     [EZLog logEventWithName:@"getSelectedText" parameters:dict];
+}
+
+#pragma mark - Mouse Indicator
+
+- (void)showMouseIndicator {
+    if (!self.mouseIndicatorView) {
+        self.mouseIndicatorView = [[EZLoadingAnimationView alloc] init];
+        self.mouseIndicatorView.wantsLayer = YES;
+        self.mouseIndicatorView.layer.backgroundColor = [NSColor colorWithWhite:0.0 alpha:0.8].CGColor;
+        self.mouseIndicatorView.layer.cornerRadius = 8;
+        self.mouseIndicatorView.layer.masksToBounds = YES;
+        
+        // הוספת האינדיקטור לחלון הראשי
+        NSWindow *mainWindow = [NSApplication sharedApplication].mainWindow;
+        if (!mainWindow) {
+            mainWindow = [NSApplication sharedApplication].keyWindow;
+        }
+        if (mainWindow && mainWindow.contentView) {
+            [mainWindow.contentView addSubview:self.mouseIndicatorView];
+        }
+    }
+    
+    // מיקום האינדיקטור ליד העכבר
+    NSPoint mouseLocation = [NSEvent mouseLocation];
+    NSWindow *mainWindow = [NSApplication sharedApplication].mainWindow;
+    if (!mainWindow) {
+        mainWindow = [NSApplication sharedApplication].keyWindow;
+    }
+    
+    if (mainWindow && mainWindow.contentView) {
+        NSPoint windowLocation = [mainWindow convertPointFromScreen:mouseLocation];
+        NSPoint viewLocation = [mainWindow.contentView convertPoint:windowLocation fromView:nil];
+        
+        [self.mouseIndicatorView setFrameOrigin:NSMakePoint(viewLocation.x + 20, viewLocation.y - 10)];
+        [self.mouseIndicatorView startLoading:YES];
+    }
+}
+
+- (void)hideMouseIndicator {
+    if (self.mouseIndicatorView) {
+        [self.mouseIndicatorView startLoading:NO];
+        [self.mouseIndicatorView removeFromSuperview];
+        self.mouseIndicatorView = nil;
+    }
+}
+
+- (void)replaceSelectedTextWithTranslation:(NSString *)translatedText {
+    NSLog(@"Replacing selected text with translation: %@", translatedText);
+    
+    // Save original compatibility mode setting
+    BOOL originalCompatibilityMode = Configuration.shared.replaceWithTranslationInCompatibilityMode;
+    
+    // Temporarily enable compatibility mode for double control feature to work in all apps
+    // This ensures it works in Telegram, ChatGPT, and other apps, not just search bars
+    Configuration.shared.replaceWithTranslationInCompatibilityMode = YES;
+    
+    // יצירת EZReplaceTextButton זמני להחלפת הטקסט
+    EZReplaceTextButton *replaceButton = [[EZReplaceTextButton alloc] init];
+    [replaceButton replaceSelectedText:translatedText];
+    
+    // Restore original setting
+    Configuration.shared.replaceWithTranslationInCompatibilityMode = originalCompatibilityMode;
 }
 
 @end

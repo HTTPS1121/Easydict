@@ -88,8 +88,8 @@ class AppleScriptTask: NSObject {
         var result: String?
         var executionError: Error?
 
-        // Execute AppleScript in background queue
-        DispatchQueue.global().async {
+        // Execute AppleScript in background queue with appropriate QoS
+        DispatchQueue.global(qos: .background).async {
             let output = script.executeAndReturnError(&errorInfo)
             if let errorInfo {
                 let message = errorInfo[NSAppleScript.errorMessage] as? String ?? "Run AppleScript error"
@@ -118,7 +118,7 @@ class AppleScriptTask: NSObject {
     static func runAppleScriptWithDescriptor(_ appleScript: String) async throws
         -> NSAppleEventDescriptor {
         try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global().async {
+            DispatchQueue.global(qos: .background).async {
                 let appleScript = NSAppleScript(source: appleScript)
                 var errorInfo: NSDictionary?
                 let output = appleScript?.executeAndReturnError(&errorInfo)

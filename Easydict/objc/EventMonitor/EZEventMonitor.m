@@ -25,6 +25,9 @@ static NSInteger const kRecordEventCount = 3;
 static NSInteger const kCommandKeyEventCount = 4;
 static CGFloat const kDoublCommandInterval = 0.5;
 
+static NSInteger const kControlKeyEventCount = 4;
+static CGFloat const kDoubleControlInterval = 0.5;
+
 static CGFloat const kExpandedRadiusValue = 120;
 
 static NSString *const kHasUsedAutoSelectTextKey = @"kHasUsedAutoSelectTextKey";
@@ -48,6 +51,7 @@ typedef NS_ENUM(NSUInteger, EZEventMonitorType) {
 @property (nonatomic, strong) NSMutableArray<NSEvent *> *recordEvents;
 
 @property (nonatomic, strong) NSMutableArray<NSEvent *> *commandKeyEvents;
+@property (nonatomic, strong) NSMutableArray<NSEvent *> *controlKeyEvents;
 
 @property (nonatomic, assign) CGFloat movedY;
 
@@ -83,6 +87,7 @@ static EZEventMonitor *_instance = nil;
 - (void)setup {
     _recordEvents = [NSMutableArray array];
     _commandKeyEvents = [NSMutableArray array];
+    _controlKeyEvents = [NSMutableArray array];
 
     self.actionType = EZActionTypeAutoSelectQuery;
     self.selectTextType = EZSelectTextTypeAccessibility;
@@ -609,6 +614,13 @@ CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef eve
         @(kAXErrorFailure) : @[
             @"com.apple.dt.Xcode", // Xcode, error when All messages page
         ],
+        
+        // kAXErrorAPIDisabled -25211
+        @(kAXErrorAPIDisabled) : @[
+            @"com.apple.dt.Xcode", // Xcode
+            @"com.tdesktop.Telegram", // Telegram
+            @"com.todesktop.230313mzl4w4u92", // Cursor
+        ],
     };
 
     // If allowedDict keys contains error, and values contain bundleID, then allow to use shortcut.
@@ -835,24 +847,24 @@ CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef eve
             break;
         }
         case NSEventTypeFlagsChanged: {
-            //            MMLogInfo(@"NSEventTypeFlagsChanged: %ld, %ld", event.type, event.modifierFlags);
-
             EZWindowManager.shared.lastPoint = NSEvent.mouseLocation;
-
-            if (event.modifierFlags & NSEventModifierFlagShift) {
-                // Shift key is released.
-                //                MMLogInfo(@"Shift key is typed.");
-            }
-
-            //            MMLogInfo(@"keyCode: %d", event.keyCode); // one command key event contains key down and key up
-
+            // Command key logic (קיים)
             if (event.keyCode == kVK_Command || event.keyCode == kVK_RightCommand) {
                 [self updateCommandKeyEvents:event];
                 if ([self checkIfDoubleCommandEvents]) {
                     [self dismissPopButton];
-
                     if (self.doubleCommandBlock) {
                         self.doubleCommandBlock();
+                    }
+                }
+            }
+            // Control key logic (חדש)
+            if (event.keyCode == kVK_Control || event.keyCode == kVK_RightControl) {
+                [self updateControlKeyEvents:event];
+                if ([self checkIfDoubleControlEvents]) {
+                    [self dismissPopButton];
+                    if (self.doubleControlBlock) {
+                        self.doubleControlBlock();
                     }
                 }
             }
@@ -964,6 +976,25 @@ CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef eve
     return NO;
 }
 
+- (void)updateControlKeyEvents:(NSEvent *)event {
+    if (self.controlKeyEvents.count >= kControlKeyEventCount) {
+        [self.controlKeyEvents removeObjectAtIndex:0];
+    }
+    [self.controlKeyEvents addObject:event];
+}
+
+- (BOOL)checkIfDoubleControlEvents {
+    if (self.controlKeyEvents.count < kControlKeyEventCount) {
+        return NO;
+    }
+    NSEvent *firstEvent = self.controlKeyEvents.firstObject;
+    NSEvent *lastEvent = self.controlKeyEvents.lastObject;
+    NSTimeInterval interval = lastEvent.timestamp - firstEvent.timestamp;
+    if (interval < kDoubleControlInterval) {
+        return YES;
+    }
+    return NO;
+}
 
 - (void)delayDismissPopButton {
     [self delayDismissPopButton:kDismissPopButtonDelayTime];
