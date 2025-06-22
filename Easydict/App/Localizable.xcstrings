@@ -1289,6 +1289,9 @@
         }
       }
     },
+    "Deselect All" : {
+
+    },
     "detected" : {
       "comment" : "query window",
       "localizations" : {
@@ -3996,6 +3999,9 @@
           }
         }
       }
+    },
+    "Select All" : {
+
     },
     "select_query_text_when_window_activate" : {
       "extractionState" : "manual",

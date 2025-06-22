@@ -19,6 +19,15 @@ struct ServiceTab: View {
             VStack {
                 WindowTypePicker(windowType: $viewModel.windowType)
                     .padding()
+                HStack {
+                    Button("Select All") {
+                        viewModel.setAllServicesEnabled(true)
+                    }
+                    Button("Deselect All") {
+                        viewModel.setAllServicesEnabled(false)
+                    }
+                }
+                .padding(.bottom, 4)
                 List(selection: $viewModel.selectedService) {
                     ServiceItems()
                 }
@@ -125,6 +134,15 @@ private class ServiceTabViewModel: ObservableObject {
 
     func postUpdateServiceNotification() {
         NotificationCenter.default.postServiceUpdateNotification(windowType: windowType)
+    }
+
+    func setAllServicesEnabled(_ enabled: Bool) {
+        for service in services {
+            service.enabled = enabled
+            EZLocalStorage.shared().setService(service, windowType: windowType)
+        }
+        postUpdateServiceNotification()
+        updateServices()
     }
 }
 
