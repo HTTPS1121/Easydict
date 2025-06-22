@@ -36,6 +36,7 @@
 - [x] Out of the box, easily look up words or translate text.
 - [x] Automatic recognition of input language and automatic query of target preferred language.
 - [x] Auto select translate, automatically display the query icon after word search, and mouse hover to query.
+- [x] **NEW: Double Control Key Translation** - Double-click the Control key to instantly translate selected text and replace it with the translation result.
 - [x] Support for configuring different services for different window types.
 - [x] Support system OCR screenshot translation, Silent Screenshot OCR.
 - [x] Support system TTS, along with online services from Bing, Google, Youdao and Baidu Cloud.
@@ -65,6 +66,7 @@ We plan to refactor the project with Swift. If you are interested in this open s
     - [Build Environment](#build-environment)
 - [Usage](#usage)
   - [Select text by Mouse](#select-text-by-mouse)
+  - [Double Control Key Translation](#double-control-key-translation)
   - [About Permissions](#about-permissions)
 - [OCR](#ocr)
 - [Language Recognition](#language-recognition)
@@ -174,6 +176,7 @@ Once Easydict is launched, in addition to the main window (hidden by default), t
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | Mouse select translate    | The query icon is automatically displayed after the word is selected, and the mouse hovers over it to query                                  | ![iShot_2023-01-20_11.01.35-1674183779](https://raw.githubusercontent.com/tisfeng/ImageBed/main/uPic/iShot_2023-01-20_11.01.35-1674183779.gif) |
 | Shortcut select translate | After selecting the text to be translated, press the shortcut key (default `⌥ + D`)                                                          | ![iShot_2023-01-20_11.24.37-1674185125](https://raw.githubusercontent.com/tisfeng/ImageBed/main/uPic/iShot_2023-01-20_11.24.37-1674185125.gif) |
+| **Double Control Translation** | **Double-click the Control key to instantly translate selected text and replace it with the translation result** | **NEW FEATURE** |
 | Screenshot translate      | Press the screenshot translate shortcut key (default `⌥ + S`) to capture the area to be translated                                           | ![iShot_2023-01-20_11.26.25-1674185209](https://raw.githubusercontent.com/tisfeng/ImageBed/main/uPic/iShot_2023-01-20_11.26.25-1674185209.gif) |
 | Input translate           | Press the input translate shortcut key (default `⌥ + A`, or `⌥ + F`), enter the text to be translated, and `Enter` key to translate          | ![iShot_2023-01-20_11.28.46-1674185354](https://raw.githubusercontent.com/tisfeng/ImageBed/main/uPic/iShot_2023-01-20_11.28.46-1674185354.gif) |
 | Silent Screenshot OCR     | Press the Silent Screenshot shortcut key（default `⌥ + ⇧ + S`）to capture the area, the OCR results will be copied directly to the clipboard | ![屏幕录制 2023-05-20 22 39 11](https://github.com/Jerry23011/Easydict/assets/89069957/c16f3c20-1748-411e-be04-11d8fe0e61af)                    |
@@ -194,6 +197,30 @@ For Safari users, it is highly recommended that this option be turned on, as Saf
     <img src="https://github.com/Jerry23011/Easydict/assets/89069957/a1d8aa6b-69d7-459a-ac83-a6f090d04cae" width="45%">
     <img src="https://github.com/Jerry23011/Easydict/assets/89069957/4dbf038b-d939-454f-9205-648636f46ca8" width="45%">
 </div>
+
+### Double Control Key Translation
+
+**NEW FEATURE**: Double-click the Control key to instantly translate selected text and replace it with the translation result. This feature provides a quick way to translate text without opening any windows.
+
+**How it works:**
+1. Select any text in any application
+2. Double-click the Control key (⌃⌃)
+3. A loading indicator will appear near your mouse cursor
+4. The selected text will be automatically translated using your configured translation services
+5. The original text will be replaced with the translation result
+
+**Features:**
+- Works in any application that supports text selection
+- Uses your configured translation services (Google, DeepL, OpenAI, etc.)
+- Shows a visual loading indicator during translation
+- Automatically replaces the selected text with the translation
+- No need to open any translation windows
+
+**Requirements:**
+- Accessibility permissions may be required for text replacement in some applications
+- At least one translation service must be enabled in Settings
+
+This feature is particularly useful for quick translations while writing documents, emails, or working in any text-based application.
 
 ### About Permissions
 
